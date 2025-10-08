@@ -1,30 +1,32 @@
 import { test, expect } from 'playwright-test-coverage';
-import { Role, User } from "../src/service/pizzaService";
+import { Franchise, Role, Store, User } from "../src/service/pizzaService";
 import { Page } from '@playwright/test';
 
 async function basicInit(page: Page) {
   let loggedInUser: User | undefined;
   const validUsers: Record<string, User> = { 
     'd@jwt.com': { id: '3', name: 'Kai Chen', email: 'd@jwt.com', password: 'a', roles: [{ role: Role.Diner }] },
-    'a@jwt.com': { id: '1', name: 'Admin', email: 'a@jwt.com', password: 'admin', roles: [{ role: Role.Admin }] } 
+    'a@jwt.com': { id: '1', name: 'Admin', email: 'a@jwt.com', password: 'admin', roles: [{ role: Role.Admin }] },
+    'f@jwt.com': { id: '2', name: 'pizza franchise', email: 'f@jwt.com', password: 'franchisee', roles: [{ role: Role.Franchisee }] }
   };
-  const franchises = [
-          {
-            id: 2,
-            name: 'LotaPizza',
-            stores: [
-              { id: 4, name: 'Lehi' },
-              { id: 5, name: 'Springville' },
-              { id: 6, name: 'American Fork' },
-            ],
-          },
-          { id: 3, name: 'PizzaCorp', stores: [{ id: 7, name: 'Spanish Fork' }] },
-          { id: 4, name: 'topSpot', stores: [] },
-          { id: 5, name: 'another', stores: [] },
-          { id: 6, name: 'andAnother', stores: [] },
-          { id: 7, name: 'andAnother', stores: [] },
-          { id: 8, name: 'andAnother', stores: [] },
-        ]
+  const franchises: Franchise[] = [
+    {
+      id: "2",
+      name: 'LotaPizza',
+      stores: [
+        { id: "4", name: 'Lehi' },
+        { id: "5", name: 'Springville' },
+        { id: "6", name: 'American Fork' },
+      ],
+    },
+    { id: "3", name: 'PizzaCorp', stores: [{ id: "7", name: 'Spanish Fork' }] },
+    { id: "4", name: 'topSpot', stores: [] },
+    { id: "5", name: 'another', stores: [] },
+    { id: "6", name: 'andAnother', stores: [] },
+    { id: "7", name: 'andAnother', stores: [] },
+    { id: "8", name: 'andAnother', stores: [] },
+  ]
+  const stores: Store[] = [];
 
   // Authorize login for the given user
   await page.route('*/**/api/auth', async (route) => {
@@ -96,9 +98,9 @@ async function basicInit(page: Page) {
     } else if (route.request().method() == "POST") {
       const franchiseReq = route.request().postDataJSON();
       expect(route.request().method()).toBe('POST');
-      const franchise = {
+      const franchise: Franchise = {
         stores: [],
-        id: 1,
+        id: "1",
         name: franchiseReq.name,
         admins: []
       };
@@ -121,6 +123,31 @@ async function basicInit(page: Page) {
       expect(route.request().method()).toBe('GET');
       await route.fulfill({ json: { dinerId: 4, orders: [] }})
     }
+  });
+
+  await page.route('*/**/api/franchise/2', async (route) => {
+    expect(route.request().method()).toBe('GET');
+    const franchise: Franchise = {
+      id: "1",
+        name: "pizzaPocket",
+        admins: [
+            {
+                id: "2",
+                name: "pizza franchisee",
+                email: "f@jwt.com"
+            }
+        ],
+        stores: stores
+    }
+    await route.fulfill({ json: [franchise] });
+  });
+
+  await page.route('*/**/api/franchise/1/store', async (route) => {
+    const storeReq = route.request().postDataJSON();
+    expect(route.request().method()).toBe('POST');
+    const store: Store = { id: "1", name: storeReq.name, totalRevenue: 0 };
+    stores.push(store);
+    await route.fulfill({ json: store });
   });
 
   await page.goto('/');
@@ -219,3 +246,17 @@ test('diner dashboard', async ({page}) => {
   await page.getByRole('link', { name: 'KC' }).click();
   await expect(page.locator('div').filter({ hasText: 'name: Kai Chenemail:' }).nth(4)).toBeVisible();
 });
+
+test('create store', async ({page}) => {
+  await basicInit(page);
+  await page.getByRole('link', { name: 'Login' }).click();
+  await page.getByRole('textbox', { name: 'Email address' }).fill('f@jwt.com');
+  await page.getByRole('textbox', { name: 'Password' }).fill('franchisee');
+  await page.getByRole('button', { name: 'Login' }).click();
+  await page.getByLabel('Global').getByRole('link', { name: 'Franchise' }).click();
+
+  await page.getByRole('button', { name: 'Create store' }).click();
+  await page.getByRole('textbox', { name: 'store name' }).fill('testStore');
+  await page.getByRole('button', { name: 'Create' }).click();
+  await expect(page.getByRole('cell', { name: 'testStore' })).toBeVisible();
+})
