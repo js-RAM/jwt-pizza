@@ -232,7 +232,7 @@ test('create franchise', async ({ page }) => {
   await page.getByRole('button', { name: 'Create' }).click();
   await expect(page.getByRole('textbox', { name: 'Filter franchises' })).toBeVisible();
   await page.getByRole('textbox', { name: 'Filter franchises' }).fill('test');
-  await page.getByRole('button', { name: 'Submit' }).click();
+  await page.getByRole('button', { name: 'Submit' }).nth(1).click();
   await expect(page.getByRole('cell', { name: 'test', exact: true })).toBeVisible();
 });
 

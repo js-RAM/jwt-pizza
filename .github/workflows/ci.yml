@@ -31,6 +31,20 @@ jobs:
         run: |
           npm ci && npm run build
           cp dist/index.html dist/404.html
+
+      - name: Clone service repo
+        run: git clone https://github.com/js-RAM/jwt-pizza-service service
+
+      - name: Install service dependencies
+        run: |
+          cd service
+          npm ci
+
+      - name: Start service in background
+        run: |
+          cd service
+          nohup npm run start > service.log 2>&1 &
+
       - name: Run tests
         run: |
           npx playwright install --with-deps chromium
