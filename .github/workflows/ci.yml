@@ -43,7 +43,7 @@ jobs:
       - name: Start service in background
         run: |
           cd service
-          nohup npm run start > service.log 2>&1 &
+          nohup npm run start
       
       - name: Wait for service to be ready
         run: |
@@ -55,6 +55,11 @@ jobs:
             echo "Waiting for service..."
             sleep 3
           done
+      
+      - name: Generate Data for Service
+        run: |
+          cd service
+          ./generateData.sh
 
       - name: Run tests
         run: |
