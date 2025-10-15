@@ -44,6 +44,17 @@ jobs:
         run: |
           cd service
           nohup npm run start > service.log 2>&1 &
+      
+      - name: Wait for service to be ready
+        run: |
+          n=0
+          until [ $n -ge 10 ]
+          do
+            curl -sSf http://localhost:3000/health && break
+            n=$((n+1))
+            echo "Waiting for service..."
+            sleep 3
+          done
 
       - name: Run tests
         run: |
