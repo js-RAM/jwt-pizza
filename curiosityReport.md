@@ -37,10 +37,13 @@ Example:
 The signature is created by using the signing algorithm to encrypt a combination of the encoded header, encoded payload, and a secret. Because the signature is an encrypt/hash the header and payload, it can be used to verify that neither the header nor the payload had been modified.
 
 # Final JWT Token
-The token is a single string containing the header, payload, and signature separated by a "."
+The token is a single string containing the base64encoded header, payload, and signature separated by a "."
 ```javascript
     const jwt = `${header}.${payload}.${signature}`
 ```
 
 ## Use Case
 JWT Tokens are often used for stateless authentication. They can contain information necessary to know who the user is sending the token, and because of the signature, it can be verified that the information came from the server initially. In our case, the JWT Token verifies that the JWT Pizza originated from the Pizza Factory and contains the correct information.
+
+## Comparison
+I have used SAML services for authentication before. From what I have read, SAML uses XML to encode the data. JSON is much more compact, however, allowing the JWT Token to be smaller by comparison. This makes it ideal for simple, lightweight authentication.
